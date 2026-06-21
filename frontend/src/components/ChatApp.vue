@@ -245,6 +245,7 @@ import { storage } from '../utils/storage'
 import { useLogin, checkLogin, logout as doLogout, goLogin } from '../utils/loginStatus'
 import { apiGet, apiPost } from '../utils/request'
 import { t, setLang, getLang } from '../i18n'
+import { getCachedMessages, cacheMessages, cacheMessage, getCachedUser, cacheUser } from '../utils/messageStore'
 import type { ChatRoom, ChatMessage, RoomMember } from '../types'
 
 const { user: loginUser, isLogin: loggedIn, isLoading } = useLogin()
@@ -314,13 +315,36 @@ function wsConnect(roomId: number) {
 		ws.addEventListener('message', (event) => {
 			try {
 				const data = JSON.parse(event.data)
-				if (data.type === 'new_message' && data.message.user_id !== loginUser.value?.uid) {
-					messages.value.push(data.message)
-					nextTick(() => {
-						if (messagesRef.value) {
-							messagesRef.value.scrollTop = messagesRef.value.scrollHeight
+				if (data.type === 'new_message') {
+					if (data.message.user_id !== loginUser.value?.uid) {
+						messages.value.push(data.message)
+						cacheMessage(data.message)
+						nextTick(() => {
+							if (messagesRef.value) {
+								messagesRef.value.scrollTop = messagesRef.value.scrollHeight
+							}
+						})
+					}
+				} else if (data.type === 'member_joined' || data.type === 'member_left') {
+					if (currentRoom.value && currentRoom.value.id === roomId) {
+						loadMembers()
+						const systemMsg: ChatMessage = {
+							id: Date.now(),
+							room_id: roomId,
+							user_id: 0,
+							user_name: '系统',
+							content: data.type === 'member_joined' ? t('memberJoined', { name: userNameMap.value[data.user_id] || `#${data.user_id}` }) : t('memberLeft', { name: userNameMap.value[data.user_id] || `#${data.user_id}` }),
+							created_at: new Date().toISOString()
 						}
-					})
+						messages.value.push(systemMsg)
+						nextTick(() => {
+							if (messagesRef.value) {
+								messagesRef.value.scrollTop = messagesRef.value.scrollHeight
+							}
+						})
+					}
+				} else if (data.type === 'role_updated') {
+					loadMembers()
 				}
 			} catch {}
 		})
@@ -437,9 +461,15 @@ async function loadMemberNames() {
 	const ids = members.value.filter(m => !userNameMap.value[m.user_id]).map(m => m.user_id)
 	for (const uid of ids) {
 		try {
+			const cached = await getCachedUser(uid)
+			if (cached) {
+				userNameMap.value[uid] = cached.name
+				continue
+			}
 			const data = await apiGet<{ code: number; data?: { user: { uid: number; name: string } } }>(`/api/user/profile?uid=${uid}`)
 			if (data.data?.user?.name) {
 				userNameMap.value[uid] = data.data.user.name
+				await cacheUser(uid, data.data.user.name)
 			}
 		} catch {}
 	}
@@ -468,9 +498,18 @@ async function loadPrivatePeerNames() {
 			const data = await apiGet<{ code: number; data?: { peer: number } }>(`/api/chat/rooms/private/peer?room_id=${room.id}`)
 			const peerUid = data.data?.peer
 			if (peerUid) {
+				const cached = await getCachedUser(peerUid)
+				if (cached) {
+					privatePeerNames.value[room.id] = cached.name
+					userNameMap.value[peerUid] = cached.name
+					continue
+				}
 				const userData = await apiGet<{ code: number; data?: { user: { uid: number; name: string } } }>(`/api/user/profile?uid=${peerUid}`)
-				privatePeerNames.value[room.id] = userData.data?.user?.name || `#${peerUid}`
-				userNameMap.value[peerUid] = privatePeerNames.value[room.id]
+				if (userData.data?.user?.name) {
+					privatePeerNames.value[room.id] = userData.data.user.name
+					userNameMap.value[peerUid] = userData.data.user.name
+					await cacheUser(peerUid, userData.data.user.name)
+				}
 			}
 		} catch {}
 	}
@@ -478,13 +517,22 @@ async function loadPrivatePeerNames() {
 
 async function selectRoom(room: ChatRoom) {
 	currentRoom.value = room
-	messages.value = []
 	members.value = []
 	showMembersPanel.value = false
 	wsDisconnect()
+
+	const cached = await getCachedMessages(room.id, 100)
+	if (cached.length > 0) {
+		messages.value = cached
+	} else {
+		messages.value = []
+	}
+
 	try {
 		const data = await apiGet<{ code: number; data?: { messages: ChatMessage[] } }>(`/api/chat/messages?room_id=${room.id}`)
-		messages.value = (data.data?.messages || []).reverse()
+		const serverMsgs = (data.data?.messages || []).reverse()
+		messages.value = serverMsgs
+		await cacheMessages(serverMsgs)
 		if (room.description !== '__private__') {
 			await loadMembers()
 		}
@@ -513,6 +561,7 @@ async function sendMessage() {
 		})
 		if (data.data?.message) {
 			messages.value.push(data.data.message)
+			await cacheMessage(data.data.message)
 			await nextTick()
 			if (messagesRef.value) {
 				messagesRef.value.scrollTop = messagesRef.value.scrollHeight

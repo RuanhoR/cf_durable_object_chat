@@ -131,8 +131,8 @@ export class ChatRoomDO extends DurableObject {
 	}
 
 	joinRoom(roomId: number, userId: number): boolean {
-		const existing = this.sql.exec('SELECT * FROM room_members WHERE room_id = ? AND user_id = ?', roomId, userId).one()
-		if (existing) return false
+		const existing = this.sql.exec('SELECT * FROM room_members WHERE room_id = ? AND user_id = ?', roomId, userId).toArray()
+		if (existing.length > 0) return false
 		this.sql.exec("INSERT INTO room_members (room_id, user_id, role) VALUES (?, ?, 'member')", roomId, userId)
 		this.broadcast(roomId, { type: 'member_joined', user_id: userId })
 		return true
@@ -140,6 +140,7 @@ export class ChatRoomDO extends DurableObject {
 
 	leaveRoom(roomId: number, userId: number): void {
 		this.sql.exec('DELETE FROM room_members WHERE room_id = ? AND user_id = ?', roomId, userId)
+		this.broadcast(roomId, { type: 'member_left', user_id: userId })
 	}
 
 	getUserRooms(userId: number): ChatRoom[] {
@@ -159,8 +160,8 @@ export class ChatRoomDO extends DurableObject {
 		const isMuted = this.sql.exec(
 			"SELECT muted_until FROM room_members WHERE room_id = ? AND user_id = ? AND muted_until > datetime('now')",
 			roomId, userId
-		).one()
-		if (isMuted) return null
+		).toArray()
+		if (isMuted.length > 0) return null
 		this.indexUser(userId, userName)
 		this.sql.exec(
 			'INSERT INTO messages (room_id, user_id, user_name, content) VALUES (?, ?, ?, ?)',
@@ -179,8 +180,8 @@ export class ChatRoomDO extends DurableObject {
 	}
 
 	isRoomMember(roomId: number, userId: number): boolean {
-		const row = this.sql.exec('SELECT * FROM room_members WHERE room_id = ? AND user_id = ?', roomId, userId).one()
-		return !!row
+		const row = this.sql.exec('SELECT * FROM room_members WHERE room_id = ? AND user_id = ?', roomId, userId).toArray()
+		return row.length > 0
 	}
 
 	getRoomMembers(roomId: number): RoomMember[] {
@@ -194,8 +195,8 @@ export class ChatRoomDO extends DurableObject {
 		const row = this.sql.exec(
 			'SELECT role FROM room_members WHERE room_id = ? AND user_id = ?',
 			roomId, userId
-		).one() as { role: string } | undefined
-		return row ? row.role : null
+		).toArray() as { role: string }[]
+		return row.length > 0 ? row[0].role : null
 	}
 
 	setMemberRole(roomId: number, userId: number, role: string): void {
@@ -238,8 +239,8 @@ export class ChatRoomDO extends DurableObject {
 			INNER JOIN private_rooms p ON r.id = p.room_id
 			WHERE (p.user_a = ? AND p.user_b = ?) OR (p.user_a = ? AND p.user_b = ?)
 			LIMIT 1
-		`, userA, userB, userB, userA).one() as unknown as ChatRoom | undefined
-		if (existing) return existing
+		`, userA, userB, userB, userA).toArray() as unknown as ChatRoom[]
+		if (existing.length > 0) return existing[0]
 
 		this.sql.exec("INSERT INTO rooms (name, description, created_by, owner_id) VALUES (?, '__private__', ?, ?)",
 			'private', userA, userA)
@@ -263,22 +264,22 @@ export class ChatRoomDO extends DurableObject {
 		const row = this.sql.exec(
 			'SELECT user_a, user_b FROM private_rooms WHERE room_id = ?',
 			roomId
-		).one() as { user_a: number; user_b: number } | undefined
-		if (!row) return null
-		return row.user_a === userId ? row.user_b : row.user_a
+		).toArray() as { user_a: number; user_b: number }[]
+		if (row.length === 0) return null
+		return row[0].user_a === userId ? row[0].user_b : row[0].user_a
 	}
 
 	getRoomById(roomId: number): ChatRoom | null {
-		const row = this.sql.exec('SELECT * FROM rooms WHERE id = ?', roomId).one() as unknown as ChatRoom | undefined
-		return row || null
+		const row = this.sql.exec('SELECT * FROM rooms WHERE id = ?', roomId).toArray() as unknown as ChatRoom[]
+		return row.length > 0 ? row[0] : null
 	}
 
 	getUserProfile(userId: number): { uid: number; name: string } | null {
 		const user = this.sql.exec(
 			'SELECT user_id as uid, user_name as name FROM user_index WHERE user_id = ?',
 			userId
-		).one() as { uid: number; name: string } | undefined
-		return user || null
+		).toArray() as { uid: number; name: string }[]
+		return user.length > 0 ? user[0] : null
 	}
 
 	searchRooms(query: string): ChatRoom[] {

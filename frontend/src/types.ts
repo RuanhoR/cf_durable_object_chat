@@ -88,4 +88,6 @@ export interface Language {
 	startPrivateChat: string
 	viewProfile: string
 	friends: string
+	memberJoined: string
+	memberLeft: string
 }

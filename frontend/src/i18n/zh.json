@@ -49,5 +49,7 @@
 	"save": "保存",
 	"startPrivateChat": "发起私聊",
 	"viewProfile": "查看资料",
-	"friends": "好友"
+	"friends": "好友",
+	"memberJoined": "欢迎 {name} 加入群聊",
+	"memberLeft": "{name} 退出了群聊"
 }

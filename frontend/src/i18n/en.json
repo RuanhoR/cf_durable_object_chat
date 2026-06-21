@@ -49,5 +49,7 @@
 	"save": "Save",
 	"startPrivateChat": "Start Private Chat",
 	"viewProfile": "View Profile",
-	"friends": "Friends"
+	"friends": "Friends",
+	"memberJoined": "{name} joined the group",
+	"memberLeft": "{name} left the group"
 }
