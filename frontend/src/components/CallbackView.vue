@@ -21,7 +21,7 @@ onMounted(async () => {
 
 	if (code) {
 		try {
-			const data: any = await apiPost('/api/auth/oauth/token', {
+			const data = await apiPost<{ code: number; data?: { token: string } }>('/api/auth/oauth/token', {
 				code,
 				client_id: config.oauthClientId,
 				redirect_uri: config.oauthRedirectUri,

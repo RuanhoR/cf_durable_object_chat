@@ -17,7 +17,7 @@ export async function checkLogin() {
 		return false
 	}
 	try {
-		const data: any = await apiGet('/api/user/info')
+		const data = await apiGet<{ code: number; data?: { user: { uid: number; name: string } } }>('/api/user/info')
 		if (data?.code === 200 && data.data?.user) {
 			user.value = data.data.user
 			isLogin.value = true

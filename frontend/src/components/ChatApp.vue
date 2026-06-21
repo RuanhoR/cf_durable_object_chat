@@ -293,11 +293,11 @@ async function doSearch(q: string) {
 	if (!loggedIn.value) return
 	try {
 		const [rData, uData] = await Promise.all([
-			apiGet(`/api/chat/rooms/search?q=${encodeURIComponent(q)}`),
-			apiGet(`/api/chat/users/search?q=${encodeURIComponent(q)}`),
+			apiGet<{ code: number; data?: { rooms: ChatRoom[] } }>(`/api/chat/rooms/search?q=${encodeURIComponent(q)}`),
+			apiGet<{ code: number; data?: { users: { uid: number; name: string }[] } }>(`/api/chat/users/search?q=${encodeURIComponent(q)}`),
 		])
-		searchRooms.value = (rData as any).data?.rooms || []
-		searchUsers.value = (uData as any).data?.users || []
+		searchRooms.value = rData.data?.rooms || []
+		searchUsers.value = uData.data?.users || []
 	} catch {}
 }
 
@@ -420,7 +420,7 @@ function switchLang(e: Event) {
 async function loadMembers() {
 	if (!currentRoom.value) return
 	try {
-		const data: any = await apiGet(`/api/chat/rooms/members?room_id=${currentRoom.value.id}`)
+		const data = await apiGet<{ code: number; data?: { members: RoomMember[] } }>(`/api/chat/rooms/members?room_id=${currentRoom.value.id}`)
 		members.value = data.data?.members || []
 		members.value.forEach(m => {
 			if (!userNameMap.value[m.user_id]) {
@@ -437,7 +437,7 @@ async function loadMemberNames() {
 	const ids = members.value.filter(m => !userNameMap.value[m.user_id]).map(m => m.user_id)
 	for (const uid of ids) {
 		try {
-			const data: any = await apiGet(`/api/user/profile?uid=${uid}`)
+			const data = await apiGet<{ code: number; data?: { user: { uid: number; name: string } } }>(`/api/user/profile?uid=${uid}`)
 			if (data.data?.user?.name) {
 				userNameMap.value[uid] = data.data.user.name
 			}
@@ -449,13 +449,13 @@ async function loadRooms() {
 	if (!loggedIn.value) return
 	try {
 		const [myData, allData, privateData] = await Promise.all([
-			apiGet('/api/chat/rooms'),
-			apiGet('/api/chat/rooms/all'),
-			apiGet('/api/chat/rooms/private/list'),
+			apiGet<{ code: number; data?: { rooms: ChatRoom[] } }>('/api/chat/rooms'),
+			apiGet<{ code: number; data?: { rooms: ChatRoom[] } }>('/api/chat/rooms/all'),
+			apiGet<{ code: number; data?: { rooms: ChatRoom[] } }>('/api/chat/rooms/private/list'),
 		])
-		myRooms.value = (myData as any).data?.rooms || []
-		allRooms.value = (allData as any).data?.rooms || []
-		privateRooms.value = (privateData as any).data?.rooms || []
+		myRooms.value = myData.data?.rooms || []
+		allRooms.value = allData.data?.rooms || []
+		privateRooms.value = privateData.data?.rooms || []
 		await loadPrivatePeerNames()
 	} catch (e) {
 		console.error('Failed to load rooms', e)
@@ -465,10 +465,10 @@ async function loadRooms() {
 async function loadPrivatePeerNames() {
 	for (const room of privateRooms.value) {
 		try {
-			const data: any = await apiGet(`/api/chat/rooms/private/peer?room_id=${room.id}`)
+			const data = await apiGet<{ code: number; data?: { peer: number } }>(`/api/chat/rooms/private/peer?room_id=${room.id}`)
 			const peerUid = data.data?.peer
 			if (peerUid) {
-				const userData: any = await apiGet(`/api/user/profile?uid=${peerUid}`)
+				const userData = await apiGet<{ code: number; data?: { user: { uid: number; name: string } } }>(`/api/user/profile?uid=${peerUid}`)
 				privatePeerNames.value[room.id] = userData.data?.user?.name || `#${peerUid}`
 				userNameMap.value[peerUid] = privatePeerNames.value[room.id]
 			}
@@ -483,7 +483,7 @@ async function selectRoom(room: ChatRoom) {
 	showMembersPanel.value = false
 	wsDisconnect()
 	try {
-		const data: any = await apiGet(`/api/chat/messages?room_id=${room.id}`)
+		const data = await apiGet<{ code: number; data?: { messages: ChatMessage[] } }>(`/api/chat/messages?room_id=${room.id}`)
 		messages.value = (data.data?.messages || []).reverse()
 		if (room.description !== '__private__') {
 			await loadMembers()
@@ -507,7 +507,7 @@ async function sendMessage() {
 	const content = inputText.value.trim()
 	inputText.value = ''
 	try {
-		const data: any = await apiPost('/api/chat/messages/send', {
+		const data = await apiPost<{ code: number; data?: { message: ChatMessage } }>('/api/chat/messages/send', {
 			room_id: currentRoom.value.id,
 			content,
 		})
@@ -546,9 +546,10 @@ async function leaveRoom(room: ChatRoom) {
 			messages.value = []
 		}
 		await loadRooms()
-	} catch (e: any) {
-		const err = e.data || e
-		if (err?.error === 'owner cannot leave') {
+	} catch (e: unknown) {
+		const err = e as any
+		const errorMsg = err?.data?.error || err?.message || 'unknown error'
+		if (errorMsg === 'owner cannot leave') {
 			alert(t('dissolve'))
 		}
 	}
@@ -557,7 +558,7 @@ async function leaveRoom(room: ChatRoom) {
 async function createRoom() {
 	if (!newRoomName.value.trim() || !loggedIn.value) return
 	try {
-		const data: any = await apiPost('/api/chat/rooms/create', { name: newRoomName.value.trim() })
+		const data = await apiPost<{ code: number; data?: { room: ChatRoom } }>('/api/chat/rooms/create', { name: newRoomName.value.trim() })
 		if (data.data?.room) {
 			await loadRooms()
 			currentRoom.value = data.data.room
@@ -614,7 +615,7 @@ async function unmuteMember(userId: number) {
 async function saveRoomSettings() {
 	if (!currentRoom.value) return
 	try {
-		const data: any = await apiPost('/api/chat/rooms/update', {
+		const data = await apiPost<{ code: number; data?: { room: ChatRoom } }>('/api/chat/rooms/update', {
 			room_id: currentRoom.value.id,
 			name: editRoomName.value,
 			description: editRoomDesc.value,
@@ -645,7 +646,7 @@ async function confirmDissolve() {
 async function startPrivateChat(userId: number) {
 	if (userId === loginUser.value?.uid) return
 	try {
-		const data: any = await apiPost('/api/chat/rooms/private', { user_id: userId })
+		const data = await apiPost<{ code: number; data?: { room: ChatRoom } }>('/api/chat/rooms/private', { user_id: userId })
 		if (data.data?.room) {
 			await loadRooms()
 			tab.value = 'private'

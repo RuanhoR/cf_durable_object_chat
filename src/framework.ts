@@ -31,7 +31,7 @@ class ResponseFrame {
 				});
 			}
 			let matchedHandler: HandlerGroup | undefined = undefined;
-			let paramMap = new Map<string, string>();
+			const paramMap = new Map<string, string>();
 
 			for (const _handler of this.handlers) {
 				const handler = _handler as HandlerGroup;
@@ -117,7 +117,7 @@ class ResponseFrame {
 					return result;
 				}
 			};
-			let result = await executeChain(0);
+			const result = await executeChain(0);
 			return new Response(result.body, {
 				status: result.status,
 				statusText: result.statusText,

@@ -10,7 +10,7 @@ async function fetchUserFromApi(token: string): Promise<{ uid: number; name: str
 			method: 'POST',
 			headers: { Authorization: `Bearer ${token}` },
 		})
-		const data = await res.json() as any
+		const data = await res.json() as { code: number; data?: { uid: number; name: string } }
 		if (data.code === 200 && data.data?.uid) {
 			return { uid: data.data.uid, name: data.data.name }
 		}
@@ -109,7 +109,7 @@ const proxyOauthToken: HandlerFn = async (_, request) => {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(body),
 		})
-		const data = await res.json() as object
+		const data = await res.json() as Record<string, unknown>
 		return json(data, res.status)
 	} catch {
 		return json({ code: -1, error: 'proxy error' }, 502)
@@ -127,7 +127,7 @@ const proxyLogout: HandlerFn = async (data, request) => {
 			},
 			body: '{}',
 		})
-		const body = await res.json() as object
+		const body = await res.json() as Record<string, unknown>
 		return json(body, res.status)
 	} catch {
 		return json({ code: -1, error: 'proxy error' }, 502)
@@ -230,12 +230,7 @@ const getPrivatePeer: HandlerFn = async (data, request, url, env) => {
 	return json({ code: 200, data: { peer } })
 }
 
-const getUserProfile: HandlerFn = async (data, request, url) => {
-	const uidStr = url.searchParams.get('uid')
-	if (!uidStr) return json({ code: -1, error: 'uid required' }, 400)
-	const profile = { uid: parseInt(uidStr), name: '' }
-	return json({ code: 200, data: { user: profile } })
-}
+// Removed unused getUserProfile handler
 
 const searchRoomsHandler: HandlerFn = async (data, request, url, env) => {
 	const q = url.searchParams.get('q') || ''
@@ -263,7 +258,7 @@ const fetchUserProfile: HandlerFn = async (data, request, url, env) => {
 			method: 'POST',
 			headers: { Authorization: `Bearer ${token}` },
 		})
-		const apiData = await res.json() as any
+		const apiData = await res.json() as { code: number; data?: { uid: number; name: string } }
 		if (apiData.code === 200 && apiData.data) {
 			return json({ code: 200, data: { user: { uid: apiData.data.uid, name: apiData.data.name } } })
 		}
@@ -290,12 +285,12 @@ async function handleWebSocketUpgrade(request: Request, env: Env): Promise<Respo
 
 	const pair = new WebSocketPair()
 	const doUrl = `http://do/ws?room_id=${roomId}&user_id=${user.uid}`
-	await stub.fetch(doUrl, { webSocket: pair[1] } as any)
+	await stub.fetch(doUrl, { webSocket: pair[1] } as RequestInit)
 	return new Response(null, { status: 101, webSocket: pair[0] })
 }
 
 export default {
-	async fetch(request, env, ctx): Promise<Response> {
+	async fetch(request, env, _ctx): Promise<Response> {
 		const url = new URL(request.url)
 		if (url.pathname === '/api/chat/ws' && request.headers.get('Upgrade') === 'websocket') {
 			return handleWebSocketUpgrade(request, env)
