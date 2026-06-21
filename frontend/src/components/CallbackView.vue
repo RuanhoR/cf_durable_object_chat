@@ -8,7 +8,7 @@
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiPost } from '../utils/request'
-import { setToken } from '../utils/loginStatus'
+import { setToken, getLoginRedirect, clearLoginRedirect } from '../utils/loginStatus'
 import { t } from '../i18n'
 import config from '../config'
 
@@ -22,22 +22,26 @@ onMounted(async () => {
 
 	if (code) {
 		try {
-			const data: any = await apiPost('/oauth/token', {
+			const data: any = await apiPost('/api/auth/oauth/token', {
 				code,
 				client_id: config.oauthClientId,
 				redirect_uri: config.oauthRedirectUri,
 			})
 			if (data.code === 200 && data.data?.token) {
 				setToken(data.data.token)
+			} else {
+				console.error('OAuth token exchange failed', data)
 			}
 		} catch (e) {
 			console.error('OAuth token exchange failed', e)
 		}
-	} else if (tokenParam && server === 'account.ruanhor.dpdns.org') {
+	} else if (tokenParam) {
 		setToken(tokenParam)
 	}
 
-	router.replace('/')
+	const redirect = getLoginRedirect()
+	clearLoginRedirect()
+	router.replace(redirect)
 })
 </script>
 

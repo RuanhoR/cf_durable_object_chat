@@ -6,8 +6,19 @@ export interface User {
 export interface ChatRoom {
 	id: number
 	name: string
+	description: string
 	created_at: string
+	updated_at: string
 	created_by: number
+	owner_id: number
+}
+
+export interface RoomMember {
+	room_id: number
+	user_id: number
+	role: string
+	muted_until: string | null
+	joined_at: string
 }
 
 export interface ChatMessage {
@@ -34,8 +45,11 @@ export interface Language {
 	chatRooms: string
 	createRoom: string
 	roomName: string
+	roomDescription: string
 	join: string
 	leave: string
+	dissolve: string
+	confirmDissolve: string
 	delete: string
 	search: string
 	searchPlaceholder: string
@@ -48,12 +62,30 @@ export interface Language {
 	cancel: string
 	loading: string
 	loginRequired: string
+	selectRoom: string
 	loginNow: string
 	back: string
 	online: string
+	muted: string
 	members: string
 	create: string
 	allRooms: string
 	myRooms: string
+	privateChat: string
+	owner: string
+	admin: string
+	member: string
+	setAdmin: string
+	setMember: string
+	mute: string
+	unmute: string
+	muteDuration: string
+	minutes: string
+	editGroup: string
+	groupName: string
+	groupDescription: string
+	save: string
+	startPrivateChat: string
+	viewProfile: string
 	friends: string
 }
