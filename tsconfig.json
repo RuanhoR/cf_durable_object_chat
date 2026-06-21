@@ -40,5 +40,6 @@
 			"./worker-configuration.d.ts",
 			"node"
 		]
-	}
+	},
+	"exclude": ["frontend", "dist", "node_modules"]
 }

@@ -10,7 +10,16 @@
 	},
 	"devDependencies": {
 		"@types/node": "^26.0.0",
-		"typescript": "^5.5.2",
+		"@vitejs/plugin-vue": "^6.0.7",
+		"typescript": "^5.9.3",
+		"vite": "^8.0.16",
+		"vue-tsc": "^3.3.5",
 		"wrangler": "^4.103.0"
+	},
+	"dependencies": {
+		"@supabase/supabase-js": "^2.108.2",
+		"dayjs": "^1.11.21",
+		"vue": "^3.5.38",
+		"vue-router": "^5.1.0"
 	}
 }
