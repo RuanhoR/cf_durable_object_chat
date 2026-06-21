@@ -15,8 +15,11 @@
 
 ## 待完成
 - [x] Worker 使用框架 (ResponseFrame) 重写
+- [x] OAuth 登录流程修复 (account.ruanhor.dpdns.org)
+- [x] vue-router 路由 (/, /_callback, /login)
+- [x] 未登录自动跳转登录页
+- [x] 退出登录服务端 token 失效
 - [ ] 移动端响应式布局完善
 - [ ] 好友系统
 - [ ] 消息通知
 - [ ] 代码清理
-- [ ] git commit + wrangler deploy

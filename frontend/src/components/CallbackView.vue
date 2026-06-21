@@ -18,7 +18,6 @@ onMounted(async () => {
 	const params = new URLSearchParams(location.search)
 	const code = params.get('code')
 	const tokenParam = params.get('token')
-	const server = params.get('server')
 
 	if (code) {
 		try {
