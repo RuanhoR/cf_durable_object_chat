@@ -88,7 +88,7 @@ export class ChatRoomDO extends DurableObject {
 	async fetch(request: Request) {
 		const url = new URL(request.url)
 		const roomId = parseInt(url.searchParams.get('room_id') || '')
-		const userId = parseInt(url.searchParams.get('user_id') || '0')
+		void url.searchParams.get('user_id')
 		if (!roomId) return new Response('room_id required', { status: 400 })
 
 		const pair = new WebSocketPair()

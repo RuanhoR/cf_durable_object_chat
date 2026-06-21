@@ -1,5 +1,5 @@
 export const supportMethod = ["get", "post", "delete", "put", "option"] as const
-export type HandlerFn = (data: Map<string, string>, request: Request, url: URL, env?: Env) => Response | Promise<Response>;
+export type HandlerFn = (data: Map<string, string>, request: Request, url: URL, env: Env) => Response | Promise<Response>;
 export type HandlerGroup = {
 	url: string;
 	handler: HandlerFn;

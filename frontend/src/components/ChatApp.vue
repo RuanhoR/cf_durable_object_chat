@@ -507,7 +507,7 @@ async function sendMessage() {
 	const content = inputText.value.trim()
 	inputText.value = ''
 	try {
-		const data = await apiPost<{ code: number; data?: { message: ChatMessage } }>('/api/chat/messages/send', {
+		const data = await apiPost<{ code: number; data?: { message: ChatMessage }; error?: string }>('/api/chat/messages/send', {
 			room_id: currentRoom.value.id,
 			content,
 		})
@@ -547,8 +547,8 @@ async function leaveRoom(room: ChatRoom) {
 		}
 		await loadRooms()
 	} catch (e: unknown) {
-		const err = e as any
-		const errorMsg = err?.data?.error || err?.message || 'unknown error'
+		const err = e as { data?: { error?: string }; error?: string; message?: string }
+		const errorMsg = (err?.data || err)?.error || err?.message || 'unknown error'
 		if (errorMsg === 'owner cannot leave') {
 			alert(t('dissolve'))
 		}

@@ -23,6 +23,6 @@ export function verifyType<T extends Record<string, keyof TypeMap>>(
 	verify: T
 ): obj is { [K in keyof T]: TypeMap[T[K]] } {
 	return Object.entries(verify).every(([key, type]) => {
-		return typeof (obj as any)[key] === type;
+		return typeof (obj as Record<string, unknown>)[key] === type;
 	});
 }

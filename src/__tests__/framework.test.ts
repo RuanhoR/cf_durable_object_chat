@@ -1,7 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import ResponseFrame from '../framework'
 
-function makeRequest(method: string, path: string, body?: any): Request {
+// Mock Env for testing
+const mockEnv: Env = {} as Env
+
+function makeRequest(method: string, path: string, body?: unknown): Request {
 	return new Request(`http://localhost${path}`, {
 		method,
 		headers: { 'Content-Type': 'application/json', Origin: 'http://localhost' },
@@ -10,9 +13,9 @@ function makeRequest(method: string, path: string, body?: any): Request {
 }
 
 describe('ResponseFrame', () => {
-	it('handles simple GET route', async () => {
+		it('handles simple GET route', async () => {
 		const req = makeRequest('GET', '/api/test')
-		const frame = new ResponseFrame(req)
+		const frame = new ResponseFrame(req, mockEnv)
 		frame.get('/api/test', () => new Response(JSON.stringify({ ok: true }), {
 			headers: { 'Content-Type': 'application/json' },
 		}))
@@ -23,9 +26,9 @@ describe('ResponseFrame', () => {
 
 	it('handles POST route with body', async () => {
 		const req = makeRequest('POST', '/api/data', { hello: 'world' })
-		const frame = new ResponseFrame(req)
+		const frame = new ResponseFrame(req, mockEnv)
 		frame.post('/api/data', async (_data, request) => {
-			const body = await request.json() as any
+			const body = await request.json() as Record<string, unknown>
 			return new Response(JSON.stringify({ echo: body }), {
 				headers: { 'Content-Type': 'application/json' },
 			})
@@ -37,7 +40,7 @@ describe('ResponseFrame', () => {
 
 	it('returns 404 for unmatched route', async () => {
 		const req = makeRequest('GET', '/api/nonexistent')
-		const frame = new ResponseFrame(req)
+		const frame = new ResponseFrame(req, mockEnv)
 		const res = await frame.handlerRequest()
 		expect(res.status).toBe(404)
 	})
@@ -47,7 +50,7 @@ describe('ResponseFrame', () => {
 			method: 'OPTIONS',
 			headers: { Origin: 'http://example.com' },
 		})
-		const frame = new ResponseFrame(req)
+		const frame = new ResponseFrame(req, mockEnv)
 		const res = await frame.handlerRequest()
 		expect(res.status).toBe(204)
 		expect(res.headers.get('Access-Control-Allow-Origin')).toBe('http://example.com')
@@ -55,7 +58,7 @@ describe('ResponseFrame', () => {
 
 	it('passes through middleware chain', async () => {
 		const req = makeRequest('GET', '/api/protected')
-		const frame = new ResponseFrame(req)
+		const frame = new ResponseFrame(req, mockEnv)
 		const log: string[] = []
 		frame.use(async (_ctx, next) => {
 			log.push('mw1')
@@ -79,7 +82,7 @@ describe('ResponseFrame', () => {
 
 	it('middleware can short-circuit', async () => {
 		const req = makeRequest('GET', '/api/blocked')
-		const frame = new ResponseFrame(req)
+		const frame = new ResponseFrame(req, mockEnv)
 		frame.use(async () => {
 			return new Response(JSON.stringify({ blocked: true }), { status: 401, headers: { 'Content-Type': 'application/json' } })
 		})
@@ -96,7 +99,7 @@ describe('ResponseFrame', () => {
 
 	it('middleware with path filter', async () => {
 		const req = makeRequest('GET', '/api/foo')
-		const frame = new ResponseFrame(req)
+		const frame = new ResponseFrame(req, mockEnv)
 		const log: string[] = []
 		frame.use(['/api/*'], async (_ctx, next) => {
 			log.push('api-mw')

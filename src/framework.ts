@@ -6,7 +6,7 @@ class ResponseFrame {
 	private middlewares: (Middleware | MiddlewareWithPaths)[] = [];
 	private urlRoute: string[];
 
-	constructor(private request: Request) {
+	constructor(private request: Request, private env: Env) {
 		this.urlParse = new URL(request.url);
 		this.urlRoute = this.urlParse.pathname.split('/').filter((segment) => segment !== '');
 	}
@@ -110,7 +110,7 @@ class ResponseFrame {
 						);
 					}
 
-					let result = matchedHandler.handler(paramMap, this.request, this.urlParse);
+					let result = matchedHandler.handler(paramMap, this.request, this.urlParse, this.env);
 					if (result instanceof Promise) {
 						result = await result;
 					}

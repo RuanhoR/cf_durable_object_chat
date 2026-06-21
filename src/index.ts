@@ -266,10 +266,6 @@ const fetchUserProfile: HandlerFn = async (data, request, url, env) => {
 	return json({ code: 200, data: { user: profile } })
 }
 
-function createHandler(env: Env, fn: HandlerFn): HandlerFn {
-	return (data, request, url) => fn(data, request, url, env)
-}
-
 async function handleWebSocketUpgrade(request: Request, env: Env): Promise<Response> {
 	const url = new URL(request.url)
 	const token = url.searchParams.get('token')
@@ -296,7 +292,7 @@ export default {
 			return handleWebSocketUpgrade(request, env)
 		}
 
-		const frame = new ResponseFrame(request)
+		const frame = new ResponseFrame(request, env)
 
 		const api = [
 			'/api/user/info', '/api/user/profile',
@@ -309,28 +305,28 @@ export default {
 		]
 		frame.use(api, authRequired)
 
-		frame.post('/api/auth/oauth/token', createHandler(env, proxyOauthToken))
-		frame.post('/api/auth/logout', createHandler(env, proxyLogout))
-		frame.get('/api/user/info', createHandler(env, getUserInfo))
-		frame.get('/api/user/profile', createHandler(env, fetchUserProfile))
-		frame.get('/api/chat/rooms', createHandler(env, getUserRooms))
-		frame.get('/api/chat/rooms/all', createHandler(env, listAllRooms))
-		frame.get('/api/chat/rooms/members', createHandler(env, getRoomMembers))
-		frame.get('/api/chat/rooms/private/list', createHandler(env, getPrivateRooms))
-		frame.get('/api/chat/rooms/private/peer', createHandler(env, getPrivatePeer))
-		frame.post('/api/chat/rooms/create', createHandler(env, createRoom))
-		frame.post('/api/chat/rooms/join', createHandler(env, joinRoom))
-		frame.post('/api/chat/rooms/leave', createHandler(env, leaveRoom))
-		frame.post('/api/chat/rooms/update', createHandler(env, updateRoomHandler))
-		frame.post('/api/chat/rooms/dissolve', createHandler(env, dissolveRoom))
-		frame.post('/api/chat/rooms/mute', createHandler(env, muteMemberHandler))
-		frame.post('/api/chat/rooms/unmute', createHandler(env, unmuteMemberHandler))
-		frame.post('/api/chat/rooms/private', createHandler(env, createPrivateChat))
-		frame.get('/api/chat/messages', createHandler(env, getMessages))
-		frame.post('/api/chat/rooms/role', createHandler(env, setMemberRole))
-		frame.get('/api/chat/rooms/search', createHandler(env, searchRoomsHandler))
-		frame.get('/api/chat/users/search', createHandler(env, searchUsersHandler))
-		frame.post('/api/chat/messages/send', createHandler(env, sendMessage))
+		frame.post('/api/auth/oauth/token', proxyOauthToken)
+		frame.post('/api/auth/logout', proxyLogout)
+		frame.get('/api/user/info', getUserInfo)
+		frame.get('/api/user/profile', fetchUserProfile)
+		frame.get('/api/chat/rooms', getUserRooms)
+		frame.get('/api/chat/rooms/all', listAllRooms)
+		frame.get('/api/chat/rooms/members', getRoomMembers)
+		frame.get('/api/chat/rooms/private/list', getPrivateRooms)
+		frame.get('/api/chat/rooms/private/peer', getPrivatePeer)
+		frame.post('/api/chat/rooms/create', createRoom)
+		frame.post('/api/chat/rooms/join', joinRoom)
+		frame.post('/api/chat/rooms/leave', leaveRoom)
+		frame.post('/api/chat/rooms/update', updateRoomHandler)
+		frame.post('/api/chat/rooms/dissolve', dissolveRoom)
+		frame.post('/api/chat/rooms/mute', muteMemberHandler)
+		frame.post('/api/chat/rooms/unmute', unmuteMemberHandler)
+		frame.post('/api/chat/rooms/private', createPrivateChat)
+		frame.get('/api/chat/messages', getMessages)
+		frame.post('/api/chat/rooms/role', setMemberRole)
+		frame.get('/api/chat/rooms/search', searchRoomsHandler)
+		frame.get('/api/chat/users/search', searchUsersHandler)
+		frame.post('/api/chat/messages/send', sendMessage)
 
 		return await frame.handlerRequest()
 	},
