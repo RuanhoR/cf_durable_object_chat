@@ -1,7 +1,11 @@
 {
 	"compilerOptions": {
 		"target": "es2022",
-		"lib": ["es2022", "dom", "dom.iterable"],
+		"lib": [
+			"es2022",
+			"dom",
+			"dom.iterable"
+		],
 		"module": "es2022",
 		"moduleResolution": "bundler",
 		"strict": true,
@@ -12,11 +16,18 @@
 		"allowSyntheticDefaultImports": true,
 		"skipLibCheck": true,
 		"noEmit": true,
-		"baseUrl": ".",
 		"paths": {
-			"@/*": ["./src/*"]
+			"@/*": [
+				"./src/*"
+			]
 		},
-		"types": ["vite/client"]
+		"types": [
+			"vite/client"
+		]
 	},
-	"include": ["src/**/*.ts", "src/**/*.vue", "vite.config.ts"]
+	"include": [
+		"src/**/*.ts",
+		"src/**/*.vue",
+		"vite.config.ts"
+	]
 }

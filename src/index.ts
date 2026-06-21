@@ -93,32 +93,6 @@ const sendMessage: HandlerFn = async (data, request, _, env) => {
 	return json({ code: 200, data: { message: msg } }, 201)
 }
 
-const oauthLogin: HandlerFn = async () => {
-	const loginUrl = `${config.apiBase}/oauth2?response_type=code&client_id=${config.oauthClientId}&redirect_uri=${encodeURIComponent(config.oauthRedirectUri)}`
-	return Response.redirect(loginUrl, 302)
-}
-
-const oauthCallback: HandlerFn = async (_, request) => {
-	const body = await request.json() as { code: string }
-	if (!body.code) return json({ code: -1, error: 'code required' }, 400)
-	const res = await fetch(`${config.apiBase}/oauth/token`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({
-			code: body.code,
-			client_id: config.oauthClientId,
-			redirect_uri: config.oauthRedirectUri,
-		}),
-	})
-	const r = await res.json() as any
-	if (r.code !== 200 || !r.data?.token) {
-		return json({ code: -1, error: 'token exchange failed' }, 400)
-	}
-	const user = await fetchUserFromApi(r.data.token)
-	if (!user) return json({ code: -1, error: 'user lookup failed' }, 400)
-	return json({ code: 200, data: { token: r.data.token, user } })
-}
-
 const getUserInfo: HandlerFn = async (data) => {
 	const user = JSON.parse(data.get('__user')!)
 	return json({ code: 200, data: { user } })
@@ -131,9 +105,6 @@ function createHandler(env: Env, fn: HandlerFn): HandlerFn {
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
 		const frame = new ResponseFrame(request)
-
-		frame.get('/api/oauth/login', oauthLogin)
-		frame.post('/api/oauth/callback', oauthCallback)
 
 		const api = ['/api/user/info', '/api/chat/rooms', '/api/chat/rooms/create', '/api/chat/rooms/join', '/api/chat/rooms/leave', '/api/chat/messages', '/api/chat/messages/send']
 		frame.use(api, authRequired)

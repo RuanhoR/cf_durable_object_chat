@@ -1,6 +1,6 @@
 import { ref, type Ref } from 'vue'
 import { storage } from './storage'
-import { apiGet } from './request'
+import { apiGet, apiPost } from './request'
 import type { User } from '../types'
 
 const user: Ref<User | null> = ref(null)
@@ -37,7 +37,13 @@ export function setToken(token: string) {
 	storage.set('token', token)
 }
 
-export function logout() {
+export async function logout() {
+	const token = storage.get('token')
+	if (token) {
+		try {
+			await apiPost('/serive/v0/logout', {})
+		} catch {}
+	}
 	storage.rm('token')
 	user.value = null
 	isLogin.value = false

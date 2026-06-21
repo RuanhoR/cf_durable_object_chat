@@ -1,4 +1,5 @@
 import { storage } from './storage'
+import config from '../config'
 
 export async function api(path: string, options: RequestInit = {}) {
 	const token = storage.get('token')
@@ -7,7 +8,8 @@ export async function api(path: string, options: RequestInit = {}) {
 		...(options.headers as Record<string, string>),
 	}
 	if (token) headers['Authorization'] = `Bearer ${token}`
-	const res = await fetch(path, { ...options, headers })
+	const base = path.startsWith('/api/') ? '' : config.apiBase
+	const res = await fetch(`${base}${path}`, { ...options, headers })
 	return res.json()
 }
 

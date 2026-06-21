@@ -3,13 +3,13 @@
 		<div class="sidebar">
 			<div class="sidebar-header" @click="showSettings = !showSettings">
 				<div class="avatar" v-if="login.user">
-					{{ login.user.name.charAt(0).toUpperCase() }}
+					{{ login.user.value?.name.charAt(0).toUpperCase() }}
 				</div>
 				<div class="avatar avatar-login" v-else>
 					?
 				</div>
 				<div class="user-info" v-if="login.user">
-					<span class="user-name">{{ login.user.name }}</span>
+					<span class="user-name">{{ login.user.value?.name }}</span>
 					<span class="user-status">{{ t('online') }}</span>
 				</div>
 				<div class="user-info" v-else @click.stop="handleLogin">
@@ -28,12 +28,8 @@
 
 			<div class="room-list" v-if="tab === 'my'">
 				<div v-if="myRooms.length === 0" class="empty-state">{{ t('noRooms') }}</div>
-				<div
-					v-for="room in filteredMyRooms"
-					:key="room.id"
-					:class="['room-item', { active: currentRoom?.id === room.id }]"
-					@click="selectRoom(room)"
-				>
+				<div v-for="room in filteredMyRooms" :key="room.id"
+					:class="['room-item', { active: currentRoom?.id === room.id }]" @click="selectRoom(room)">
 					<div class="room-avatar">{{ room.name.charAt(0).toUpperCase() }}</div>
 					<div class="room-info">
 						<span class="room-name">{{ room.name }}</span>
@@ -43,12 +39,8 @@
 
 			<div class="room-list" v-else>
 				<div v-if="allRooms.length === 0" class="empty-state">{{ t('noRooms') }}</div>
-				<div
-					v-for="room in filteredAllRooms"
-					:key="room.id"
-					:class="['room-item', { active: currentRoom?.id === room.id }]"
-					@click="selectRoom(room)"
-				>
+				<div v-for="room in filteredAllRooms" :key="room.id"
+					:class="['room-item', { active: currentRoom?.id === room.id }]" @click="selectRoom(room)">
 					<div class="room-avatar">{{ room.name.charAt(0).toUpperCase() }}</div>
 					<div class="room-info">
 						<span class="room-name">{{ room.name }}</span>
@@ -81,11 +73,8 @@
 
 				<div class="messages" ref="messagesRef">
 					<div v-if="messages.length === 0" class="empty-state">{{ t('noMessages') }}</div>
-					<div
-						v-for="msg in messages"
-						:key="msg.id"
-						:class="['message', { 'message-self': msg.user_id === login.user?.uid }]"
-					>
+					<div v-for="msg in messages" :key="msg.id"
+						:class="['message', { 'message-self': msg.user_id === login.user.value?.uid }]">
 						<div class="message-avatar">{{ msg.user_name.charAt(0).toUpperCase() }}</div>
 						<div class="message-body">
 							<div class="message-meta">
@@ -98,12 +87,8 @@
 				</div>
 
 				<div class="input-area">
-					<textarea
-						v-model="inputText"
-						:placeholder="t('inputPlaceholder')"
-						@keydown.enter.exact="sendMessage"
-						rows="2"
-					></textarea>
+					<textarea v-model="inputText" :placeholder="t('inputPlaceholder')" @keydown.enter.exact="sendMessage"
+						rows="2"></textarea>
 					<button class="btn-send" @click="sendMessage">{{ t('send') }}</button>
 				</div>
 			</div>
@@ -141,8 +126,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
-import { useLogin, checkLogin, setToken, logout as doLogout } from '../utils/loginStatus'
+import { ref, computed, onMounted, nextTick } from 'vue'
+import { useLogin, checkLogin, logout as doLogout } from '../utils/loginStatus'
 import { apiGet, apiPost } from '../utils/request'
 import { t, setLang, getLang } from '../i18n'
 import type { ChatRoom, ChatMessage } from '../types'
@@ -293,47 +278,23 @@ async function createRoom() {
 }
 
 async function handleLogin() {
-	window.location.href = `/api/oauth/login`
+	window.location.href = '/login'
 }
 
-function handleLogout() {
-	doLogout()
+async function handleLogout() {
+	await doLogout()
 	currentRoom.value = null
 	messages.value = []
 	myRooms.value = []
 	allRooms.value = []
 }
 
-async function handleOAuthCallback() {
-	const params = new URLSearchParams(location.search)
-	const code = params.get('code')
-	const token = params.get('token')
-
-	if (code) {
-		try {
-			const data: any = await apiPost('/api/oauth/callback', { code })
-			if (data.token) {
-				setToken(data.token)
-			}
-		} catch (e) {
-			console.error('OAuth callback failed', e)
-		}
-		const url = new URL(location.href)
-		url.search = ''
-		window.history.replaceState({}, '', url.toString())
-	} else if (token) {
-		setToken(token)
-		const url = new URL(location.href)
-		url.search = ''
-		window.history.replaceState({}, '', url.toString())
-	}
-}
-
 onMounted(async () => {
-	await handleOAuthCallback()
 	const loggedIn = await checkLogin()
 	if (loggedIn) {
 		await loadRooms()
+	} else {
+		window.location.href = '/login'
 	}
 })
 </script>
@@ -506,7 +467,8 @@ onMounted(async () => {
 	font-size: 12px;
 }
 
-.btn-join, .btn-leave {
+.btn-join,
+.btn-leave {
 	padding: 4px 12px;
 	border-radius: 4px;
 	font-size: 12px;
@@ -777,7 +739,7 @@ onMounted(async () => {
 .modal-overlay {
 	position: fixed;
 	inset: 0;
-	background: rgba(0,0,0,0.5);
+	background: rgba(0, 0, 0, 0.5);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -789,7 +751,7 @@ onMounted(async () => {
 	border-radius: var(--radius-lg);
 	padding: 24px;
 	width: 360px;
-	box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 .modal h3 {
@@ -813,7 +775,8 @@ onMounted(async () => {
 	justify-content: flex-end;
 }
 
-.btn-cancel, .btn-confirm {
+.btn-cancel,
+.btn-confirm {
 	padding: 8px 20px;
 	border-radius: 8px;
 	font-weight: 500;
