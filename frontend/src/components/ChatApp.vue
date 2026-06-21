@@ -1,5 +1,9 @@
 <template>
-	<div class="chat-layout">
+	<div v-if="isLoading" class="loading-screen">
+		<div class="loading-spinner"></div>
+		<p>{{ t('loading') }}</p>
+	</div>
+	<div v-else class="chat-layout">
 		<div class="sidebar">
 			<div class="sidebar-header" @click="showSettings = !showSettings">
 				<div class="avatar" v-if="loginUser">
@@ -243,7 +247,7 @@ import { apiGet, apiPost } from '../utils/request'
 import { t, setLang, getLang } from '../i18n'
 import type { ChatRoom, ChatMessage, RoomMember } from '../types'
 
-const { user: loginUser, isLogin: loggedIn } = useLogin()
+const { user: loginUser, isLogin: loggedIn, isLoading } = useLogin()
 const tab = ref<'my' | 'all' | 'private'>('my')
 const searchQuery = ref('')
 const currentRoom = ref<ChatRoom | null>(null)
@@ -684,6 +688,29 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.loading-screen {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 16px;
+	color: var(--text-secondary);
+}
+
+.loading-spinner {
+	width: 32px;
+	height: 32px;
+	border: 3px solid var(--border-color);
+	border-top-color: var(--accent);
+	border-radius: 50%;
+	animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+	to { transform: rotate(360deg); }
+}
+
 .chat-layout {
 	display: flex;
 	height: 100%;
