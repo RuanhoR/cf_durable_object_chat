@@ -3,11 +3,9 @@
 // Runtime types generated with workerd@1.20260617.1 2026-06-21 nodejs_compat
 interface __BaseEnv_Env {
 	ASSETS: Fetcher;
-	SUPABASE_URL: "https://your-project.supabase.co";
-	SUPABASE_KEY: "SUPABASE_KEY_PLACEHOLDER";
-	API_BASE: "https://a.p.z.ruanhor.dpdns.org";
-	OAUTH_CLIENT_ID: "ZDRmNjU4ZDEvIlswZDhkMGM5MS01Mzc1LTQ0MmUtOTg3Yi0xMGJlMjBiNmNiMjM=";
-	OAUTH_REDIRECT_URI: "https://hauchat.wei.qzz.io/_callback";
+	API_BASE: string;
+	OAUTH_CLIENT_ID: string;
+	OAUTH_REDIRECT_URI: string;
 	CHAT_ROOM_DO: DurableObjectNamespace<import("./src/index").ChatRoomDO>;
 }
 declare namespace Cloudflare {
@@ -22,7 +20,7 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
 };
 declare namespace NodeJS {
-	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "SUPABASE_URL" | "SUPABASE_KEY" | "API_BASE" | "OAUTH_CLIENT_ID" | "OAUTH_REDIRECT_URI">> {}
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "API_BASE" | "OAUTH_CLIENT_ID" | "OAUTH_REDIRECT_URI">> {}
 }
 
 // Begin runtime types

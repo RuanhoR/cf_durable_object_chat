@@ -74,7 +74,7 @@ class ResponseFrame {
 
 				for (let i = 0; i < patternSegments.length; i++) {
 					const segment = patternSegments[i];
-					if (segment.startsWith(':')) continue;
+					if (segment === '*' || segment.startsWith(':')) continue;
 					if (segment !== this.urlRoute[i]) return false;
 				}
 				return true;

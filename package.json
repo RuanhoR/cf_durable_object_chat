@@ -8,18 +8,26 @@
 		"start": "wrangler dev",
 		"cf-typegen": "wrangler types",
 		"frontend:build": "cd frontend && vue-tsc -b && vite build",
-		"frontend:dev": "cd frontend && vite dev"
+		"frontend:dev": "cd frontend && vite dev",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"lint": "eslint . --ext .ts,.vue --max-warnings 50"
 	},
 	"devDependencies": {
 		"@types/node": "^26.0.0",
+		"@typescript-eslint/eslint-plugin": "^8.61.1",
+		"@typescript-eslint/parser": "^8.61.1",
 		"@vitejs/plugin-vue": "^6.0.7",
+		"eslint": "^10.5.0",
+		"eslint-plugin-vue": "^10.9.2",
 		"typescript": "^5.9.3",
 		"vite": "^8.0.16",
+		"vitest": "^4.1.9",
+		"vue-eslint-parser": "^10.4.1",
 		"vue-tsc": "^3.3.5",
 		"wrangler": "^4.103.0"
 	},
 	"dependencies": {
-		"@supabase/supabase-js": "^2.108.2",
 		"dayjs": "^1.11.21",
 		"vue": "^3.5.38",
 		"vue-router": "^5.1.0"

@@ -44,10 +44,8 @@
 		"command": "pnpm frontend:build"
 	},
 	"vars": {
-		"SUPABASE_URL": "https://your-project.supabase.co",
-		"SUPABASE_KEY": "SUPABASE_KEY_PLACEHOLDER",
-		"API_BASE": "https://a.p.z.ruanhor.dpdns.org",
-		"OAUTH_CLIENT_ID": "ZDRmNjU4ZDEvIlswZDhkMGM5MS01Mzc1LTQ0MmUtOTg3Yi0xMGJlMjBiNmNiMjM=",
-		"OAUTH_REDIRECT_URI": "https://hauchat.wei.qzz.io/_callback"
+		"API_BASE": "https://api.example.com",
+		"OAUTH_CLIENT_ID": "your-oauth-client-id",
+		"OAUTH_REDIRECT_URI": "https://your-app.example.com/_callback"
 	}
 }
